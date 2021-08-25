@@ -1,14 +1,14 @@
 package reisen
 
-// #cgo LDFLAGS: -lavutil -lavformat -lavcodec -lswscale
+// #cgo LDFLAGS: -lavutil -lavformat -lavcodec
 // #include <libavcodec/avcodec.h>
 // #include <libavformat/avformat.h>
 // #include <libavutil/avconfig.h>
-// #include <libswscale/swscale.h>
 import "C"
 import (
 	"fmt"
 	"time"
+	"unsafe"
 )
 
 type StreamType int
@@ -44,19 +44,19 @@ type Stream interface {
 	TimeBase() (int, int)
 	FrameRate() (int, int)
 	FrameCount() int64
+	Open() error
+	ReadFrame() (Frame, bool, error)
+	Close() error
 }
 
-// TODO: opening and reading from the stream.
-
 type baseStream struct {
+	media       *Media
 	inner       *C.AVStream
 	codecParams *C.AVCodecParameters
 	codec       *C.AVCodec
 	codecCtx    *C.AVCodecContext
 	packet      *C.AVPacket
 	frame       *C.AVFrame
-	rgbaFrame   *C.AVFrame
-	swsCtx      *C.struct_SwsContext
 }
 
 func (stream *baseStream) Index() int {
@@ -108,4 +108,87 @@ func (stream *baseStream) FrameRate() (int, int) {
 
 func (stream *baseStream) FrameCount() int64 {
 	return int64(stream.inner.nb_frames)
+}
+
+func (stream *baseStream) open() error {
+	stream.codecCtx = C.avcodec_alloc_context3(stream.codec)
+
+	if stream.codecCtx == nil {
+		return fmt.Errorf("couldn't open a codec context")
+	}
+
+	status := C.avcodec_parameters_to_context(
+		stream.codecCtx, stream.codecParams)
+
+	if status < 0 {
+		return fmt.Errorf(
+			"%d: couldn't send codec parameters to the context", status)
+	}
+
+	stream.packet = C.av_packet_alloc()
+
+	if stream.packet == nil {
+		return fmt.Errorf(
+			"couldn't allocate a new packet")
+	}
+
+	stream.frame = C.av_frame_alloc()
+
+	if stream.frame == nil {
+		return fmt.Errorf(
+			"couldn't allocate a new frame")
+	}
+
+	return nil
+}
+
+func (stream *baseStream) read() (bool, error) {
+	status := C.av_read_frame(stream.media.ctx, stream.packet)
+
+	if status < 0 {
+		if stream.packet.data == nil {
+			return false, fmt.Errorf(
+				"%d: couldn't extract the frame", status)
+		}
+
+		// No packets anymore.
+		return false, nil
+	}
+
+	// If the packet doesn't belong tj the stream.
+	if stream.packet.stream_index != stream.inner.index {
+		return true, nil
+	}
+
+	status = C.avcodec_send_packet(
+		stream.codecCtx, stream.packet)
+
+	if status < 0 {
+		return false, fmt.Errorf(
+			"%d: couldn't send the packet to the codec context", status)
+	}
+
+	status = C.avcodec_receive_frame(
+		stream.codecCtx, stream.frame)
+
+	if status < 0 {
+		return false, fmt.Errorf(
+			"%d: couldn't receive the frame from the codec context", status)
+	}
+
+	return true, nil
+}
+
+func (stream *baseStream) close() error {
+	C.av_free(unsafe.Pointer(stream.frame))
+	C.av_free(unsafe.Pointer(stream.packet))
+
+	status := C.avcodec_close(stream.codecCtx)
+
+	if status < 0 {
+		return fmt.Errorf(
+			"%d: couldn't close the codec", status)
+	}
+
+	return nil
 }

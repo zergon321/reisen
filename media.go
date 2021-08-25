@@ -86,6 +86,7 @@ func (media *Media) findStreams() error {
 			videoStream.inner = innerStream
 			videoStream.codecParams = codecParams
 			videoStream.codec = codec
+			videoStream.media = media
 
 			streams = append(streams, videoStream)
 
@@ -94,6 +95,7 @@ func (media *Media) findStreams() error {
 			audioStream.inner = innerStream
 			audioStream.codecParams = codecParams
 			audioStream.codec = codec
+			audioStream.media = media
 
 			streams = append(streams, audioStream)
 
