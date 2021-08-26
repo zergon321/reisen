@@ -55,9 +55,13 @@ type baseStream struct {
 	codecParams *C.AVCodecParameters
 	codec       *C.AVCodec
 	codecCtx    *C.AVCodecContext
-	packet      *C.AVPacket
 	frame       *C.AVFrame
 	skip        bool
+	opened      bool
+}
+
+func (stream *baseStream) Opened() bool {
+	return stream.opened
 }
 
 func (stream *baseStream) Index() int {
@@ -138,13 +142,6 @@ func (stream *baseStream) open() error {
 			"%d: couldn't open the codec context", status)
 	}
 
-	stream.packet = C.av_packet_alloc()
-
-	if stream.packet == nil {
-		return fmt.Errorf(
-			"couldn't allocate a new packet")
-	}
-
 	stream.frame = C.av_frame_alloc()
 
 	if stream.frame == nil {
@@ -152,32 +149,14 @@ func (stream *baseStream) open() error {
 			"couldn't allocate a new frame")
 	}
 
+	stream.opened = true
+
 	return nil
 }
 
 func (stream *baseStream) read() (bool, error) {
-	status := C.av_read_frame(stream.media.ctx, stream.packet)
-
-	if status < 0 {
-		if status == C.int(ErrorAgain) {
-			stream.skip = true
-			return true, nil
-		}
-
-		stream.skip = false
-
-		// No packets anymore.
-		return false, nil
-	}
-
-	// If the packet doesn't belong to the stream.
-	if stream.packet.stream_index != stream.inner.index {
-		stream.skip = true
-		return true, nil
-	}
-
-	status = C.avcodec_send_packet(
-		stream.codecCtx, stream.packet)
+	status := C.avcodec_send_packet(
+		stream.codecCtx, stream.media.packet)
 
 	if status < 0 {
 		stream.skip = false
@@ -201,7 +180,7 @@ func (stream *baseStream) read() (bool, error) {
 			"%d: couldn't receive the frame from the codec context", status)
 	}
 
-	C.av_packet_unref(stream.packet)
+	C.av_packet_unref(stream.media.packet)
 
 	stream.skip = false
 
@@ -210,7 +189,6 @@ func (stream *baseStream) read() (bool, error) {
 
 func (stream *baseStream) close() error {
 	C.av_free(unsafe.Pointer(stream.frame))
-	C.av_free(unsafe.Pointer(stream.packet))
 
 	status := C.avcodec_close(stream.codecCtx)
 
@@ -218,6 +196,8 @@ func (stream *baseStream) close() error {
 		return fmt.Errorf(
 			"%d: couldn't close the codec", status)
 	}
+
+	stream.opened = false
 
 	return nil
 }

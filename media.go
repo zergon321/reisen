@@ -14,6 +14,7 @@ import (
 
 type Media struct {
 	ctx     *C.AVFormatContext
+	packet  *C.AVPacket
 	streams []Stream
 }
 
@@ -106,6 +107,37 @@ func (media *Media) findStreams() error {
 
 	media.streams = streams
 
+	return nil
+}
+
+func (media *Media) OpenDecode() error {
+	media.packet = C.av_packet_alloc()
+
+	if media.packet == nil {
+		return fmt.Errorf(
+			"couldn't allocate a new packet")
+	}
+
+	return nil
+}
+
+func (media *Media) ReadPacket() (*Packet, bool, error) {
+	status := C.av_read_frame(media.ctx, media.packet)
+
+	if status < 0 {
+		if status == C.int(ErrorAgain) {
+			return nil, true, nil
+		}
+
+		// No packets anymore.
+		return nil, false, nil
+	}
+
+	return &Packet{media: media}, true, nil
+}
+
+func (media *Media) CloseDecode() error {
+	C.av_free(unsafe.Pointer(media.packet))
 	return nil
 }
 
