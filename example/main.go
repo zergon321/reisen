@@ -55,12 +55,12 @@ func main() {
 				videoFrame, gotFrame, err = s.ReadVideoFrame()
 				handleError(err)
 
-				if videoFrame == nil {
-					continue
-				}
-
 				if !gotFrame {
 					break
+				}
+
+				if videoFrame == nil {
+					continue
 				}
 
 				pts, err := videoFrame.PresentationOffset()
@@ -91,12 +91,12 @@ func main() {
 				audioFrame, gotFrame, err = s.ReadAudioFrame()
 				handleError(err)
 
-				if audioFrame == nil {
-					continue
-				}
-
 				if !gotFrame {
 					break
+				}
+
+				if audioFrame == nil {
+					continue
 				}
 
 				pts, err := audioFrame.PresentationOffset()
