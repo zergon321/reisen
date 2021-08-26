@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"image/png"
-	"os"
 
 	"github.com/zergon321/reisen"
 )
@@ -37,78 +35,76 @@ func main() {
 		fmt.Printf("Time base: %d/%d\n", tbNum, tbDen)
 		fmt.Printf("Frame rate: %d/%d\n", fpsNum, fpsDen)
 		fmt.Println("Frame count:", stream.FrameCount())
-
-		switch s := stream.(type) {
-		case *reisen.VideoStream:
-			num, den := s.AspectRatio()
-
-			fmt.Println("Width:", s.Width())
-			fmt.Println("Height:", s.Height())
-			fmt.Printf("Aspect ratio: %d:%d\n", num, den)
-
-			err := stream.Open()
-			handleError(err)
-			gotFrame := true
-
-			for i := 0; i < 7 && gotFrame; i++ {
-				var videoFrame *reisen.VideoFrame
-				videoFrame, gotFrame, err = s.ReadVideoFrame()
-				handleError(err)
-
-				if !gotFrame {
-					break
-				}
-
-				if videoFrame == nil {
-					continue
-				}
-
-				pts, err := videoFrame.PresentationOffset()
-				handleError(err)
-
-				fmt.Println("Presentation duration offset:", pts)
-
-				file, err := os.Create(fmt.Sprintf("frame_%d.png", i))
-				handleError(err)
-				err = png.Encode(file, videoFrame.Image())
-				handleError(err)
-			}
-
-			err = stream.Close()
-			handleError(err)
-
-		case *reisen.AudioStream:
-			fmt.Println("Sample rate:", s.SampleRate())
-			fmt.Println("Number of channels:", s.ChannelCount())
-			fmt.Println("Frame size:", s.FrameSize())
-
-			err := stream.Open()
-			handleError(err)
-			gotFrame := true
-
-			for i := 0; i < 7 && gotFrame; i++ {
-				var audioFrame *reisen.AudioFrame
-				audioFrame, gotFrame, err = s.ReadAudioFrame()
-				handleError(err)
-
-				if !gotFrame {
-					break
-				}
-
-				if audioFrame == nil {
-					continue
-				}
-
-				pts, err := audioFrame.PresentationOffset()
-				handleError(err)
-
-				fmt.Println("Presentation duration offset:", pts)
-				fmt.Println("Data length:", len(audioFrame.Data()))
-			}
-		}
-
 		fmt.Println()
 	}
+
+	// Do decoding.
+	err = media.OpenDecode()
+	handleError(err)
+	gotPacket := true
+
+	for i := 0; i < 90 && gotPacket; i++ {
+		var pkt *reisen.Packet
+		pkt, gotPacket, err = media.ReadPacket()
+		handleError(err)
+
+		switch pkt.Type() {
+		case reisen.StreamVideo:
+			s := media.Streams()[pkt.StreamIndex()].(*reisen.VideoStream)
+
+			if !s.Opened() {
+				err = s.Open()
+				handleError(err)
+			}
+
+			videoFrame, gotFrame, err := s.ReadVideoFrame()
+			handleError(err)
+
+			if !gotFrame {
+				break
+			}
+
+			if videoFrame == nil {
+				continue
+			}
+
+			pts, err := videoFrame.PresentationOffset()
+			handleError(err)
+
+			fmt.Println("Presentation duration offset:", pts)
+			fmt.Println("Number of pixels:", len(videoFrame.Image().Pix))
+			fmt.Println()
+
+		case reisen.StreamAudio:
+			s := media.Streams()[pkt.StreamIndex()].(*reisen.AudioStream)
+
+			if !s.Opened() {
+				err = s.Open()
+				handleError(err)
+			}
+
+			audioFrame, gotFrame, err := s.ReadAudioFrame()
+			handleError(err)
+
+			if !gotFrame {
+				break
+			}
+
+			if audioFrame == nil {
+				continue
+			}
+
+			pts, err := audioFrame.PresentationOffset()
+			handleError(err)
+
+			fmt.Println("Presentation duration offset:", pts)
+			fmt.Println("Data length:", len(audioFrame.Data()))
+			fmt.Println()
+		}
+	}
+
+	err = media.CloseDecode()
+	handleError(err)
 }
 
 func handleError(err error) {
