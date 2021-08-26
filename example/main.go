@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	media, err := reisen.NewMedia("demo.mkv")
+	media, err := reisen.NewMedia("demo.mp4")
 	handleError(err)
 	defer media.Close()
 	dur, err := media.Duration()

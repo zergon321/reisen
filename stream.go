@@ -159,7 +159,7 @@ func (stream *baseStream) read() (bool, error) {
 	status := C.av_read_frame(stream.media.ctx, stream.packet)
 
 	if status < 0 {
-		if stream.packet.data == nil {
+		if stream.packet.buf == nil {
 			return false, fmt.Errorf(
 				"%d: couldn't extract the frame", status)
 		}
@@ -194,6 +194,8 @@ func (stream *baseStream) read() (bool, error) {
 		return false, fmt.Errorf(
 			"%d: couldn't receive the frame from the codec context", status)
 	}
+
+	C.av_packet_unref(stream.packet)
 
 	stream.skip = false
 
