@@ -164,6 +164,8 @@ func (stream *baseStream) read() (bool, error) {
 			return true, nil
 		}
 
+		stream.skip = false
+
 		// No packets anymore.
 		return false, nil
 	}
@@ -178,6 +180,8 @@ func (stream *baseStream) read() (bool, error) {
 		stream.codecCtx, stream.packet)
 
 	if status < 0 {
+		stream.skip = false
+
 		return false, fmt.Errorf(
 			"%d: couldn't send the packet to the codec context", status)
 	}
@@ -190,6 +194,8 @@ func (stream *baseStream) read() (bool, error) {
 			stream.skip = true
 			return true, nil
 		}
+
+		stream.skip = false
 
 		return false, fmt.Errorf(
 			"%d: couldn't receive the frame from the codec context", status)
