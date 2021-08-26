@@ -159,9 +159,9 @@ func (stream *baseStream) read() (bool, error) {
 	status := C.av_read_frame(stream.media.ctx, stream.packet)
 
 	if status < 0 {
-		if stream.packet.buf == nil {
-			return false, fmt.Errorf(
-				"%d: couldn't extract the frame", status)
+		if status == C.int(ErrorAgain) {
+			stream.skip = true
+			return true, nil
 		}
 
 		// No packets anymore.
