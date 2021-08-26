@@ -75,6 +75,10 @@ func (audio *AudioStream) ReadAudioFrame() (*AudioFrame, bool, error) {
 		return nil, false, err
 	}
 
+	if ok && audio.skip {
+		return nil, true, nil
+	}
+
 	// No more data.
 	if !ok {
 		return nil, false, nil

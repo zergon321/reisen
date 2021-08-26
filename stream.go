@@ -57,6 +57,7 @@ type baseStream struct {
 	codecCtx    *C.AVCodecContext
 	packet      *C.AVPacket
 	frame       *C.AVFrame
+	skip        bool
 }
 
 func (stream *baseStream) Index() int {
@@ -89,6 +90,11 @@ func (stream *baseStream) BitRate() int64 {
 
 func (stream *baseStream) Duration() (time.Duration, error) {
 	dur := stream.inner.duration
+
+	if dur < 0 {
+		dur = 0
+	}
+
 	tmNum, tmDen := stream.TimeBase()
 	factor := float64(tmNum) / float64(tmDen)
 	tm := float64(dur) * factor
@@ -125,6 +131,13 @@ func (stream *baseStream) open() error {
 			"%d: couldn't send codec parameters to the context", status)
 	}
 
+	status = C.avcodec_open2(stream.codecCtx, stream.codec, nil)
+
+	if status < 0 {
+		return fmt.Errorf(
+			"%d: couldn't open the codec context", status)
+	}
+
 	stream.packet = C.av_packet_alloc()
 
 	if stream.packet == nil {
@@ -155,8 +168,9 @@ func (stream *baseStream) read() (bool, error) {
 		return false, nil
 	}
 
-	// If the packet doesn't belong tj the stream.
+	// If the packet doesn't belong to the stream.
 	if stream.packet.stream_index != stream.inner.index {
+		stream.skip = true
 		return true, nil
 	}
 
@@ -172,9 +186,16 @@ func (stream *baseStream) read() (bool, error) {
 		stream.codecCtx, stream.frame)
 
 	if status < 0 {
+		if status == C.int(ErrorAgain) {
+			stream.skip = true
+			return true, nil
+		}
+
 		return false, fmt.Errorf(
 			"%d: couldn't receive the frame from the codec context", status)
 	}
+
+	stream.skip = false
 
 	return true, nil
 }

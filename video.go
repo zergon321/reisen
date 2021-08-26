@@ -17,6 +17,7 @@ type VideoStream struct {
 	baseStream
 	swsCtx    *C.struct_SwsContext
 	rgbaFrame *C.AVFrame
+	bufSize   C.int
 }
 
 func (video *VideoStream) AspectRatio() (int, int) {
@@ -46,17 +47,17 @@ func (video *VideoStream) Open() error {
 			"couldn't allocate a new RGBA frame")
 	}
 
-	bufSize := C.av_image_get_buffer_size(C.AV_PIX_FMT_RGBA,
+	video.bufSize = C.av_image_get_buffer_size(C.AV_PIX_FMT_RGBA,
 		video.codecCtx.width, video.codecCtx.height, 1)
 
-	if bufSize < 0 {
+	if video.bufSize < 0 {
 		return fmt.Errorf(
-			"%d: couldn't get the buffer size", bufSize)
+			"%d: couldn't get the buffer size", video.bufSize)
 	}
 
 	var byteSize C.ulong = 8
 	buf := (*C.uint8_t)(unsafe.Pointer(
-		C.av_malloc(C.ulong(bufSize) * byteSize)))
+		C.av_malloc(C.ulong(video.bufSize) * byteSize)))
 
 	if buf == nil {
 		return fmt.Errorf(
@@ -96,6 +97,10 @@ func (video *VideoStream) ReadVideoFrame() (*VideoFrame, bool, error) {
 		return nil, false, err
 	}
 
+	if ok && video.skip {
+		return nil, true, nil
+	}
+
 	// No more data.
 	if !ok {
 		return nil, false, nil
@@ -109,7 +114,7 @@ func (video *VideoStream) ReadVideoFrame() (*VideoFrame, bool, error) {
 
 	data := C.GoBytes(unsafe.
 		Pointer(video.rgbaFrame.data[0]),
-		video.rgbaFrame.linesize[0])
+		video.bufSize)
 	frame := newVideoFrame(video, int64(video.frame.pts),
 		int(video.codecCtx.width), int(video.codecCtx.height), data)
 
