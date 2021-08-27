@@ -12,16 +12,21 @@ import (
 	"unsafe"
 )
 
+// Media is a media file containing
+// audio, video and other types of streams.
 type Media struct {
 	ctx     *C.AVFormatContext
 	packet  *C.AVPacket
 	streams []Stream
 }
 
+// StreamCount returns the number of streams.
 func (media *Media) StreamCount() int {
 	return int(media.ctx.nb_streams)
 }
 
+// Streams returns a slice of all the available
+// media data streams.
 func (media *Media) Streams() []Stream {
 	streams := make([]Stream, len(media.streams))
 	copy(streams, media.streams)
@@ -29,6 +34,8 @@ func (media *Media) Streams() []Stream {
 	return streams
 }
 
+// Duration returns the overall duration
+// of the media file.
 func (media *Media) Duration() (time.Duration, error) {
 	dur := media.ctx.duration
 	tm := float64(dur) / float64(TimeBase)
@@ -36,6 +43,7 @@ func (media *Media) Duration() (time.Duration, error) {
 	return time.ParseDuration(fmt.Sprintf("%fs", tm))
 }
 
+// FormatName returns the name of the media format.
 func (media *Media) FormatName() string {
 	if media.ctx.iformat.name == nil {
 		return ""
@@ -44,6 +52,8 @@ func (media *Media) FormatName() string {
 	return C.GoString(media.ctx.iformat.name)
 }
 
+// FormatLongName returns the long name
+// of the media container.
 func (media *Media) FormatLongName() string {
 	if media.ctx.iformat.long_name == nil {
 		return ""
@@ -52,6 +62,8 @@ func (media *Media) FormatLongName() string {
 	return C.GoString(media.ctx.iformat.long_name)
 }
 
+// FormatMIMEType returns the MIME type name
+// of the media container.
 func (media *Media) FormatMIMEType() string {
 	if media.ctx.iformat.mime_type == nil {
 		return ""
@@ -60,6 +72,8 @@ func (media *Media) FormatMIMEType() string {
 	return C.GoString(media.ctx.iformat.mime_type)
 }
 
+// findStreams retrieves the stream information
+// from the media container.
 func (media *Media) findStreams() error {
 	streams := []Stream{}
 	innerStreams := unsafe.Slice(
@@ -110,6 +124,9 @@ func (media *Media) findStreams() error {
 	return nil
 }
 
+// OpenDecode opens the media container for decoding.
+//
+// CloseDecode() should be called afterwards.
 func (media *Media) OpenDecode() error {
 	media.packet = C.av_packet_alloc()
 
@@ -121,6 +138,7 @@ func (media *Media) OpenDecode() error {
 	return nil
 }
 
+// ReadPacket reads the next packet from the media stream.
 func (media *Media) ReadPacket() (*Packet, bool, error) {
 	status := C.av_read_frame(media.ctx, media.packet)
 
@@ -136,15 +154,19 @@ func (media *Media) ReadPacket() (*Packet, bool, error) {
 	return &Packet{media: media}, true, nil
 }
 
+// CloseDecode closes the media container for decoding.
 func (media *Media) CloseDecode() error {
 	C.av_free(unsafe.Pointer(media.packet))
 	return nil
 }
 
+// Close closes the media container.
 func (media *Media) Close() {
 	C.avformat_free_context(media.ctx)
 }
 
+// NewMedia returns a new media container analyzer
+// for the specified media file.
 func NewMedia(filename string) (*Media, error) {
 	media := &Media{
 		ctx: C.avformat_alloc_context(),

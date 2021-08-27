@@ -12,27 +12,40 @@ import (
 )
 
 const (
+	// StandardChannelCount is used for
+	// audio conversion while decoding
+	// audio frames.
 	StandardChannelCount = 2
 )
 
+// AudioStream is a stream containing
+// audio frames consisting of audio samples.
 type AudioStream struct {
 	baseStream
 	swrCtx *C.SwrContext
 	buffer *C.uint8_t
 }
 
+// ChannelCount returns the number of channels
+// (1 for mono, 2 for stereo, etc.).
 func (audio *AudioStream) ChannelCount() int {
 	return int(audio.codecParams.channels)
 }
 
+// SampleRate returns the sample rate of the
+// audio stream.
 func (audio *AudioStream) SampleRate() int {
 	return int(audio.codecParams.sample_rate)
 }
 
+// FrameSize returns the number of samples
+// contained in one frame of the audio.
 func (audio *AudioStream) FrameSize() int {
 	return int(audio.codecParams.frame_size)
 }
 
+// Open opens the audio stream to decode
+// audio frames and samples from it.
 func (audio *AudioStream) Open() error {
 	err := audio.open()
 
@@ -64,10 +77,12 @@ func (audio *AudioStream) Open() error {
 	return nil
 }
 
+// ReadFrame reads a new frame from the stream.
 func (audio *AudioStream) ReadFrame() (Frame, bool, error) {
 	return audio.ReadAudioFrame()
 }
 
+// ReadAudioFrame reads a new audio frame from the stream.
 func (audio *AudioStream) ReadAudioFrame() (*AudioFrame, bool, error) {
 	ok, err := audio.read()
 
@@ -122,6 +137,8 @@ func (audio *AudioStream) ReadAudioFrame() (*AudioFrame, bool, error) {
 	return frame, true, nil
 }
 
+// Close closes the audio stream and
+// stops decoding audio frames.
 func (audio *AudioStream) Close() error {
 	err := audio.close()
 

@@ -13,6 +13,8 @@ import (
 	"unsafe"
 )
 
+// VideoStream is a streaming holding
+// video frames.
 type VideoStream struct {
 	baseStream
 	swsCtx    *C.struct_SwsContext
@@ -20,19 +22,26 @@ type VideoStream struct {
 	bufSize   C.int
 }
 
+// AspectRatio returns the fraction of the video
+// stream frame aspect ratio (1/0 if unknown).
 func (video *VideoStream) AspectRatio() (int, int) {
 	return int(video.codecParams.sample_aspect_ratio.num),
 		int(video.codecParams.sample_aspect_ratio.den)
 }
 
+// Width returns the width of the video
+// stream frame.
 func (video *VideoStream) Width() int {
 	return int(video.codecParams.width)
 }
 
+// Height returns the height of the video
+// stream frame.
 func (video *VideoStream) Height() int {
 	return int(video.codecParams.height)
 }
 
+// Open opens the video stream for decoding.
 func (video *VideoStream) Open() error {
 	err := video.open()
 
@@ -86,10 +95,13 @@ func (video *VideoStream) Open() error {
 	return nil
 }
 
+// ReadFrame reads the next frame from the stream.
 func (video *VideoStream) ReadFrame() (Frame, bool, error) {
 	return video.ReadVideoFrame()
 }
 
+// ReadVideoFrame reads the next video frame
+// from the video stream.
 func (video *VideoStream) ReadVideoFrame() (*VideoFrame, bool, error) {
 	ok, err := video.read()
 
@@ -121,6 +133,7 @@ func (video *VideoStream) ReadVideoFrame() (*VideoFrame, bool, error) {
 	return frame, true, nil
 }
 
+// Close closes the video stream for decoding.
 func (video *VideoStream) Close() error {
 	err := video.close()
 

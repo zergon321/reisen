@@ -103,6 +103,11 @@ func main() {
 		}
 	}
 
+	for _, stream := range media.Streams() {
+		err = stream.Close()
+		handleError(err)
+	}
+
 	err = media.CloseDecode()
 	handleError(err)
 }
