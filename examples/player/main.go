@@ -24,6 +24,9 @@ const (
 	SpeakerSampleRate beep.SampleRate = 44100
 )
 
+// readVideoAndAudio reads video and audio frames
+// from the opened media and sends the decoded
+// data to che channels to be played.
 func readVideoAndAudio(media *reisen.Media) (<-chan *image.RGBA, <-chan [2]float64, chan error, error) {
 	frameBuffer := make(chan *image.RGBA,
 		frameBufferSize)
@@ -103,8 +106,12 @@ func readVideoAndAudio(media *reisen.Media) (<-chan *image.RGBA, <-chan [2]float
 					continue
 				}
 
+				// Turn the raw byte data into
+				// audio samples of type [2]float64.
 				reader := bytes.NewReader(audioFrame.Data())
 
+				// See the README.md file for
+				// detailed scheme of the sample structure.
 				for reader.Len() > 0 {
 					sample := [2]float64{0, 0}
 					var result float64
@@ -143,6 +150,11 @@ func readVideoAndAudio(media *reisen.Media) (<-chan *image.RGBA, <-chan [2]float
 	return frameBuffer, sampleBuffer, errs, nil
 }
 
+// streamSamples creates a new custom streamer for
+// playing audio samples provided by the source channel.
+//
+// See https://github.com/faiface/beep/wiki/Making-own-streamers
+// for reference.
 func streamSamples(sampleSource <-chan [2]float64) beep.Streamer {
 	return beep.StreamerFunc(func(samples [][2]float64) (n int, ok bool) {
 		numRead := 0
@@ -167,6 +179,8 @@ func streamSamples(sampleSource <-chan [2]float64) beep.Streamer {
 	})
 }
 
+// Game holds all the data
+// necessary for playing video.
 type Game struct {
 	videoSprite            *ebiten.Image
 	ticker                 <-chan time.Time
@@ -180,7 +194,10 @@ type Game struct {
 	deltaTime              float64
 }
 
+// Strarts reading samples and frames
+// of the media file.
 func (game *Game) Start(fname string) error {
+	// Initialize the audio speaker.
 	err := speaker.Init(sampleRate,
 		SpeakerSampleRate.N(time.Second/10))
 
@@ -188,6 +205,7 @@ func (game *Game) Start(fname string) error {
 		return err
 	}
 
+	// Sprite for drawing video frames.
 	game.videoSprite, err = ebiten.NewImage(
 		width, height, ebiten.FilterDefault)
 
@@ -195,18 +213,22 @@ func (game *Game) Start(fname string) error {
 		return err
 	}
 
+	// Open the media file.
 	media, err := reisen.NewMedia(fname)
 
 	if err != nil {
 		return err
 	}
 
+	// Get the FPS for playing
+	// video frames.
 	videoFPS, _ := media.Streams()[0].FrameRate()
 
 	if err != nil {
 		return err
 	}
 
+	// SPF for frame ticker.
 	spf := 1.0 / float64(videoFPS)
 	frameDuration, err := time.
 		ParseDuration(fmt.Sprintf("%fs", spf))
@@ -215,6 +237,7 @@ func (game *Game) Start(fname string) error {
 		return err
 	}
 
+	// Start decoding streams.
 	var sampleSource <-chan [2]float64
 	game.frameBuffer, sampleSource,
 		game.errs, err = readVideoAndAudio(media)
@@ -223,6 +246,7 @@ func (game *Game) Start(fname string) error {
 		return err
 	}
 
+	// Start playing audio samples.
 	speaker.Play(streamSamples(sampleSource))
 
 	game.ticker = time.Tick(frameDuration)
@@ -238,9 +262,11 @@ func (game *Game) Start(fname string) error {
 }
 
 func (game *Game) Update(screen *ebiten.Image) error {
+	// Compute dt.
 	game.deltaTime = time.Since(game.last).Seconds()
 	game.last = time.Now()
 
+	// Check for incoming errors.
 	select {
 	case err, ok := <-game.errs:
 		if ok {
@@ -250,6 +276,7 @@ func (game *Game) Update(screen *ebiten.Image) error {
 	default:
 	}
 
+	// Read video frames and draw them.
 	select {
 	case <-game.ticker:
 		frame, ok := <-game.frameBuffer
@@ -264,6 +291,7 @@ func (game *Game) Update(screen *ebiten.Image) error {
 	default:
 	}
 
+	// Draw the video sprite.
 	op := &ebiten.DrawImageOptions{}
 	err := screen.DrawImage(game.videoSprite, op)
 
@@ -273,6 +301,7 @@ func (game *Game) Update(screen *ebiten.Image) error {
 
 	game.fps++
 
+	// Update metrics in the window title.
 	select {
 	case <-game.perSecond:
 		ebiten.SetWindowTitle(fmt.Sprintf("%s | FPS: %d | dt: %f | Frames: %d | Video FPS: %d",
