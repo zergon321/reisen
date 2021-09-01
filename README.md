@@ -42,7 +42,7 @@ go get github.com/zergon321/reisen
 
 Any media file is composed of streams containing media data, e.g. audio, video and subtitles. The whole presentation data of the file is divided into packets. Each packet belongs to one of the streams and represents a single frame of its data. The process of decoding implies reading packets and decoding them into either video frames or audio frames.
 
-The library provides read video frames as **RGBA** pictures. The audio samples are provided as raw byte slices in the format of `AV_SAMPLE_FMT_RGBA` (i.e. 8 bytes per sample for one channel, the data type is `float64`). The channel layout is stereo (2 channels). The byte order is little-endian. The detailed scheme of the audio samples sequence is given below.
+The library provides read video frames as **RGBA** pictures. The audio samples are provided as raw byte slices in the format of `AV_SAMPLE_FMT_DBL` (i.e. 8 bytes per sample for one channel, the data type is `float64`). The channel layout is stereo (2 channels). The byte order is little-endian. The detailed scheme of the audio samples sequence is given below.
 
 ![Audio sample structure](https://github.com/zergon321/reisen/blob/master/pictures/audio_sample_structure.png)
 
