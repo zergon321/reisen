@@ -46,4 +46,4 @@ The library provides read video frames as **RGBA** pictures. The audio samples a
 
 ![Audio sample structure](https://github.com/zergon321/reisen/blob/master/pictures/audio_sample_structure.png)
 
-You are welcome to look at the [examples](https://github.com/zergon321/reisen/tree/master/examples) to understand how to work with the library.
+You are welcome to look at the [examples](https://github.com/zergon321/reisen/tree/master/examples) to understand how to work with the library. Also please take a look at the detailed [tutorial](https://medium.com/@maximgradan/playing-videos-with-golang-83e67447b111).
