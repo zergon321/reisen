@@ -45,8 +45,8 @@ func (video *VideoStream) Height() int {
 // decoding with default parameters.
 func (video *VideoStream) Open() error {
 	return video.OpenDecode(
-		int(video.codecCtx.width),
-		int(video.codecCtx.height),
+		int(video.codecParams.width),
+		int(video.codecParams.height),
 		InterpolationBicubic)
 }
 
