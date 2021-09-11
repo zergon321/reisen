@@ -2,7 +2,6 @@ package reisen
 
 // #cgo LDFLAGS: -lswscale
 // #include <libswscale/swscale.h>
-// #include <inttypes.h>
 import "C"
 
 type InterpolationAlgorithm int

@@ -41,8 +41,18 @@ func (video *VideoStream) Height() int {
 	return int(video.codecParams.height)
 }
 
-// Open opens the video stream for decoding.
+// OpenDecode opens the video stream for
+// decoding with default parameters.
 func (video *VideoStream) Open() error {
+	return video.OpenDecode(
+		int(video.codecCtx.width),
+		int(video.codecCtx.height),
+		InterpolationBicubic)
+}
+
+// OpenDecode opens the video stream for
+// decoding with the specified parameters.
+func (video *VideoStream) OpenDecode(width, height int, alg InterpolationAlgorithm) error {
 	err := video.open()
 
 	if err != nil {
@@ -56,8 +66,8 @@ func (video *VideoStream) Open() error {
 			"couldn't allocate a new RGBA frame")
 	}
 
-	video.bufSize = C.av_image_get_buffer_size(C.AV_PIX_FMT_RGBA,
-		video.codecCtx.width, video.codecCtx.height, 1)
+	video.bufSize = C.av_image_get_buffer_size(
+		C.AV_PIX_FMT_RGBA, C.int(width), C.int(height), 1)
 
 	if video.bufSize < 0 {
 		return fmt.Errorf(
@@ -75,7 +85,7 @@ func (video *VideoStream) Open() error {
 
 	status := C.av_image_fill_arrays(&video.rgbaFrame.data[0],
 		&video.rgbaFrame.linesize[0], buf, C.AV_PIX_FMT_RGBA,
-		video.codecCtx.width, video.codecCtx.height, 1)
+		C.int(width), C.int(height), 1)
 
 	if status < 0 {
 		return fmt.Errorf(
@@ -84,8 +94,8 @@ func (video *VideoStream) Open() error {
 
 	video.swsCtx = C.sws_getContext(video.codecCtx.width,
 		video.codecCtx.height, video.codecCtx.pix_fmt,
-		video.codecCtx.width, video.codecCtx.height,
-		C.AV_PIX_FMT_RGBA, C.SWS_BICUBIC, nil, nil, nil)
+		C.int(width), C.int(height),
+		C.AV_PIX_FMT_RGBA, C.int(alg), nil, nil, nil)
 
 	if video.swsCtx == nil {
 		return fmt.Errorf(
