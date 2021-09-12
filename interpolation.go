@@ -4,6 +4,8 @@ package reisen
 // #include <libswscale/swscale.h>
 import "C"
 
+// InterpolationAlgorithm is used when
+// we scale a video frame in a different resolution.
 type InterpolationAlgorithm int
 
 const (
@@ -19,3 +21,41 @@ const (
 	InterpolationLanczos         InterpolationAlgorithm = InterpolationAlgorithm(C.SWS_LANCZOS)
 	InterpolationSpline          InterpolationAlgorithm = InterpolationAlgorithm(C.SWS_SPLINE)
 )
+
+// String returns the name of the interpolation algorithm.
+func (interpolationAlg InterpolationAlgorithm) String() string {
+	switch interpolationAlg {
+	case InterpolationFastBilinear:
+		return "fast bilinear"
+
+	case InterpolationBilinear:
+		return "bilinear"
+
+	case InterpolationBicubic:
+		return "bicubic"
+
+	case InterpolationX:
+		return "x"
+
+	case InterpolationPoint:
+		return "point"
+
+	case InterpolationArea:
+		return "area"
+
+	case InterpolationBicubicBilinear:
+		return "bicubic bilinear"
+
+	case InterpolationSinc:
+		return "sinc"
+
+	case InterpolationLanczos:
+		return "lanczos"
+
+	case InterpolationSpline:
+		return "spline"
+
+	default:
+		return ""
+	}
+}
