@@ -34,6 +34,34 @@ func (media *Media) Streams() []Stream {
 	return streams
 }
 
+// VideoStreams returns all the
+// video streams of the media file.
+func (media *Media) VideoStreams() []*VideoStream {
+	videoStreams := []*VideoStream{}
+
+	for _, stream := range media.streams {
+		if videoStream, ok := stream.(*VideoStream); ok {
+			videoStreams = append(videoStreams, videoStream)
+		}
+	}
+
+	return videoStreams
+}
+
+// AudioStreams returns all the
+// audio streams of the media file.
+func (media *Media) AudioStreams() []*AudioStream {
+	audioStreams := []*AudioStream{}
+
+	for _, stream := range media.streams {
+		if audioStream, ok := stream.(*AudioStream); ok {
+			audioStreams = append(audioStreams, audioStream)
+		}
+	}
+
+	return audioStreams
+}
+
 // Duration returns the overall duration
 // of the media file.
 func (media *Media) Duration() (time.Duration, error) {

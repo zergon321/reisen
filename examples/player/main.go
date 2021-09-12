@@ -39,14 +39,14 @@ func readVideoAndAudio(media *reisen.Media) (<-chan *image.RGBA, <-chan [2]float
 		return nil, nil, nil, err
 	}
 
-	videoStream := media.Streams()[0].(*reisen.VideoStream)
+	videoStream := media.VideoStreams()[0]
 	err = videoStream.Open()
 
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	audioStream := media.Streams()[1].(*reisen.AudioStream)
+	audioStream := media.AudioStreams()[0]
 	err = audioStream.Open()
 
 	if err != nil {
