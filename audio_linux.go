@@ -132,7 +132,9 @@ func (audio *AudioStream) ReadAudioFrame() (*AudioFrame, bool, error) {
 	data := C.GoBytes(unsafe.Pointer(
 		audio.buffer), maxBufferSize)
 	frame := newAudioFrame(audio,
-		int64(audio.frame.pts), data)
+		int64(audio.frame.pts),
+		int(audio.frame.coded_picture_number),
+		int(audio.frame.display_picture_number), data)
 
 	return frame, true, nil
 }

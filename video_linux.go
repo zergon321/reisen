@@ -138,6 +138,8 @@ func (video *VideoStream) ReadVideoFrame() (*VideoFrame, bool, error) {
 		Pointer(video.rgbaFrame.data[0]),
 		video.bufSize)
 	frame := newVideoFrame(video, int64(video.frame.pts),
+		int(video.frame.coded_picture_number),
+		int(video.frame.display_picture_number),
 		int(video.codecCtx.width), int(video.codecCtx.height), data)
 
 	return frame, true, nil

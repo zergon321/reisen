@@ -14,8 +14,10 @@ type Frame interface {
 // baseFrame contains the information
 // common for all frames of any type.
 type baseFrame struct {
-	stream Stream
-	pts    int64
+	stream               Stream
+	pts                  int64
+	codedPictureNumber   int
+	displayPictureNumber int
 }
 
 // PresentationOffset returns the duration offset
@@ -27,4 +29,12 @@ func (frame *baseFrame) PresentationOffset() (time.Duration, error) {
 	tm := float64(frame.pts) * tb
 
 	return time.ParseDuration(fmt.Sprintf("%fs", tm))
+}
+
+func (frame *baseFrame) IndexCoded() int {
+	return frame.codedPictureNumber
+}
+
+func (frame *baseFrame) IndexDisplay() int {
+	return frame.displayPictureNumber
 }

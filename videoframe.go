@@ -21,7 +21,7 @@ func (frame *VideoFrame) Image() *image.RGBA {
 }
 
 // newVideoFrame returns a newly created video frame.
-func newVideoFrame(stream Stream, pts int64, width, height int, pix []byte) *VideoFrame {
+func newVideoFrame(stream Stream, pts int64, codedPictureNum, displayPictureNum, width, height int, pix []byte) *VideoFrame {
 	upLeft := image.Point{0, 0}
 	lowRight := image.Point{width, height}
 	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
@@ -31,6 +31,8 @@ func newVideoFrame(stream Stream, pts int64, width, height int, pix []byte) *Vid
 	frame.stream = stream
 	frame.pts = pts
 	frame.img = img
+	frame.codedPictureNumber = codedPictureNum
+	frame.displayPictureNumber = displayPictureNum
 
 	return frame
 }

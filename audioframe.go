@@ -14,12 +14,14 @@ func (frame *AudioFrame) Data() []byte {
 }
 
 // newAudioFrame returns a newly created audio frame.
-func newAudioFrame(stream Stream, pts int64, data []byte) *AudioFrame {
+func newAudioFrame(stream Stream, pts int64, codedPictureNum, displayPictureNum int, data []byte) *AudioFrame {
 	frame := new(AudioFrame)
 
 	frame.stream = stream
 	frame.pts = pts
 	frame.data = data
+	frame.codedPictureNumber = codedPictureNum
+	frame.displayPictureNumber = displayPictureNum
 
 	return frame
 }
