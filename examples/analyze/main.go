@@ -94,6 +94,8 @@ func main() {
 
 			fmt.Println("Presentation duration offset:", pts)
 			fmt.Println("Number of pixels:", len(videoFrame.Image().Pix))
+			fmt.Println("Coded picture number:", videoFrame.IndexCoded())
+			fmt.Println("Display picture number:", videoFrame.IndexDisplay())
 			fmt.Println()
 
 		case reisen.StreamAudio:
@@ -120,6 +122,8 @@ func main() {
 
 			fmt.Println("Presentation duration offset:", pts)
 			fmt.Println("Data length:", len(audioFrame.Data()))
+			fmt.Println("Coded picture number:", audioFrame.IndexCoded())
+			fmt.Println("Display picture number:", audioFrame.IndexDisplay())
 			fmt.Println()
 		}
 	}
