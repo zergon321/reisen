@@ -1,3 +1,5 @@
+//go:build linux || darwin
+
 package reisen
 
 // #cgo LDFLAGS: -lavutil -lavformat -lavcodec -lswresample
