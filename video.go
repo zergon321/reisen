@@ -1,5 +1,3 @@
-//go:build linux || darwin
-
 package reisen
 
 // #cgo LDFLAGS: -lavutil -lavformat -lavcodec -lswscale
@@ -76,9 +74,8 @@ func (video *VideoStream) OpenDecode(width, height int, alg InterpolationAlgorit
 			"%d: couldn't get the buffer size", video.bufSize)
 	}
 
-	var byteSize C.ulong = 8
 	buf := (*C.uint8_t)(unsafe.Pointer(
-		C.av_malloc(C.ulong(video.bufSize) * byteSize)))
+		C.av_malloc(bufferSize(video.bufSize))))
 
 	if buf == nil {
 		return fmt.Errorf(
