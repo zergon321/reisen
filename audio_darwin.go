@@ -1,4 +1,5 @@
 package reisen
+
 import "C"
 
 func bufferSize(maxBufferSize C.int) C.ulong {
