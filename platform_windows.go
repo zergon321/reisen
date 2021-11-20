@@ -2,8 +2,8 @@ package reisen
 
 import "C"
 
-func bufferSize(maxBufferSize C.int) C.ulong {
-	var byteSize C.ulong = 8
+func bufferSize(maxBufferSize C.int) C.ulonglong {
+	var byteSize C.ulonglong = 8
 	return C.ulonglong(maxBufferSize) * byteSize
 }
 
