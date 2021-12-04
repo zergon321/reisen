@@ -30,6 +30,8 @@ For **macOS**:
 brew install libav
 ```
 
+For **Windows** see the [detailed tutorial](https://medium.com/@maximgradan/how-to-easily-bundle-your-cgo-application-for-windows-8515d2b19f1e).
+
 ## Installation
 
 Just casually run this command:
