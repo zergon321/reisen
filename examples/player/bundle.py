@@ -1,15 +1,17 @@
 import os, fileinput, shutil
 
-dllDir = "C:/msys64/mingw64/bin"
-
 bundleDirPath = os.path.abspath("bundle")
 os.makedirs(bundleDirPath, exist_ok=True)
 
-for dllName in fileinput.input():
-    dllName = dllName.strip()
-    dllPath = os.path.join(dllDir, dllName)
+for dllInfo in fileinput.input():
+    dllInfo = dllInfo.strip()
+    dllInfoParts = dllInfo.split(sep=" ")
+    dllName = dllInfoParts[0]
+    dllPath = dllInfoParts[2]
     dllBundlePath = os.path.join(bundleDirPath, dllName)
 
-    shutil.copyfile(dllPath, dllBundlePath)
+    if dllPath.startswith("/mingw64/bin"):
+        dllPath = os.path.join("C:/msys64", dllPath[1:])
+        shutil.copyfile(dllPath, dllBundlePath)
 
 shutil.copyfile("player.exe", "bundle/player.exe")
