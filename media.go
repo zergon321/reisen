@@ -179,7 +179,7 @@ func (media *Media) ReadPacket() (*Packet, bool, error) {
 		return nil, false, nil
 	}
 
-	return &Packet{media: media}, true, nil
+	return newPacket(media, media.packet), true, nil
 }
 
 // CloseDecode closes the media container for decoding.
