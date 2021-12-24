@@ -194,7 +194,7 @@ func (stream *baseStream) Rewind(t time.Duration) error {
 	dur := int64(seconds * factor)
 
 	status := C.av_seek_frame(stream.media.ctx,
-		stream.inner.index, C.long(dur),
+		stream.inner.index, rewindPosition(dur),
 		C.AVSEEK_FLAG_FRAME|C.AVSEEK_FLAG_BACKWARD)
 
 	if status < 0 {
