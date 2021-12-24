@@ -42,17 +42,46 @@ func (streamType StreamType) String() string {
 
 // Stream is an abstract media data stream.
 type Stream interface {
+	// Index returns the index
+	// number of the stream.
 	Index() int
+	// Type returns the type
+	// identifier of the stream.
+	//
+	// It's either video or audio.
 	Type() StreamType
+	// CodecName returns the
+	// shortened name of the stream codec.
 	CodecName() string
+	// CodecLongName returns the
+	// long name of the stream codec.
 	CodecLongName() string
+	// BitRate returns the stream
+	// bitrate (in bps).
 	BitRate() int64
+	// Duration returns the time
+	// duration of the stream
 	Duration() (time.Duration, error)
+	// TimeBase returns the numerator
+	// and the denominator of the stream
+	// time base fraction to convert
+	// time duration in time base units
+	// of the stream.
 	TimeBase() (int, int)
+	// FrameRate returns the approximate
+	// frame rate (FPS) of the stream.
 	FrameRate() (int, int)
+	// FrameCount returns the total number
+	// of frames in the stream.
 	FrameCount() int64
+	// Open opens the stream for decoding.
 	Open() error
+	// Rewind rewinds the whole media to the
+	// specified time location based on the stream.
+	Rewind(time.Duration) error
+	// ReadFrame decodes the next frame from the stream.
 	ReadFrame() (Frame, bool, error)
+	// Closes the stream for decoding.
 	Close() error
 }
 
@@ -147,6 +176,33 @@ func (stream *baseStream) FrameRate() (int, int) {
 // in the stream.
 func (stream *baseStream) FrameCount() int64 {
 	return int64(stream.inner.nb_frames)
+}
+
+// Rewind rewinds the stream to
+// the specified time position.
+//
+// Can be used on all the types
+// of streams. However, it's better
+// to use it on the video stream of
+// the media file if you don't want
+// the streams of the playback to
+// desynchronyze.
+func (stream *baseStream) Rewind(t time.Duration) error {
+	tmNum, tmDen := stream.TimeBase()
+	factor := float64(tmDen) / float64(tmNum)
+	seconds := t.Seconds()
+	dur := int64(seconds * factor)
+
+	status := C.av_seek_frame(stream.media.ctx,
+		stream.inner.index, C.long(dur),
+		C.AVSEEK_FLAG_FRAME|C.AVSEEK_FLAG_BACKWARD)
+
+	if status < 0 {
+		return fmt.Errorf(
+			"%d: couldn't rewind the stream", status)
+	}
+
+	return nil
 }
 
 // open opens the stream for decoding.
