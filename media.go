@@ -179,18 +179,57 @@ func (media *Media) ReadPacket() (*Packet, bool, error) {
 		return nil, false, nil
 	}
 
-	return newPacket(media, media.packet), true, nil
+	// Filter the packet if needed.
+	packetStream := media.streams[media.packet.stream_index]
+	outPacket := media.packet
+
+	if packetStream.filter() != nil {
+		filter := packetStream.filter()
+		packetIn := packetStream.filterIn()
+		packetOut := packetStream.filterOut()
+
+		status = C.av_packet_ref(packetIn, media.packet)
+
+		if status < 0 {
+			return nil, false,
+				fmt.Errorf("%d: couldn't reference the packet",
+					status)
+		}
+
+		status = C.av_bsf_send_packet(filter, packetIn)
+
+		if status < 0 {
+			return nil, false,
+				fmt.Errorf("%d: couldn't send the packet to the filter",
+					status)
+		}
+
+		status = C.av_bsf_receive_packet(filter, packetOut)
+
+		if status < 0 {
+			return nil, false,
+				fmt.Errorf("%d: couldn't receive the packet from the filter",
+					status)
+		}
+
+		outPacket = packetOut
+	}
+
+	return newPacket(media, outPacket), true, nil
 }
 
 // CloseDecode closes the media container for decoding.
 func (media *Media) CloseDecode() error {
 	C.av_free(unsafe.Pointer(media.packet))
+	media.packet = nil
+
 	return nil
 }
 
 // Close closes the media container.
 func (media *Media) Close() {
 	C.avformat_free_context(media.ctx)
+	media.ctx = nil
 }
 
 // NewMedia returns a new media container analyzer

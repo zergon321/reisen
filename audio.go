@@ -148,7 +148,9 @@ func (audio *AudioStream) Close() error {
 	}
 
 	C.av_free(unsafe.Pointer(audio.buffer))
+	audio.buffer = nil
 	C.swr_free(&audio.swrCtx)
+	audio.swrCtx = nil
 
 	return nil
 }

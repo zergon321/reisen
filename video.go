@@ -153,7 +153,9 @@ func (video *VideoStream) Close() error {
 	}
 
 	C.av_free(unsafe.Pointer(video.rgbaFrame))
+	video.rgbaFrame = nil
 	C.sws_freeContext(video.swsCtx)
+	video.swsCtx = nil
 
 	return nil
 }
