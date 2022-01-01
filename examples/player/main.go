@@ -60,6 +60,12 @@ func readVideoAndAudio(media *reisen.Media) (<-chan *image.RGBA, <-chan [2]float
 		return nil, nil, nil, err
 	}*/
 
+	/*err = media.Streams()[0].ApplyFilter("h264_mp4toannexb")
+
+	if err != nil {
+		return nil, nil, nil, err
+	}*/
+
 	go func() {
 		for {
 			packet, gotPacket, err := media.ReadPacket()
@@ -73,6 +79,9 @@ func readVideoAndAudio(media *reisen.Media) (<-chan *image.RGBA, <-chan [2]float
 			if !gotPacket {
 				break
 			}
+
+			/*hash := sha256.Sum256(packet.Data())
+			fmt.Println(base58.Encode(hash[:]))*/
 
 			switch packet.Type() {
 			case reisen.StreamVideo:
