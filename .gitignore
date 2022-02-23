@@ -1,3 +1,8 @@
 examples/player/bundle
+examples/analyze/bundle
 examples/player/player.exe
+examples/analyze/analyze.exe
 examples/player/main.exe
+examples/analyze/main.exe
+examples/player/player
+examples/analyze/analyze
