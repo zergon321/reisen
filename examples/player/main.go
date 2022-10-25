@@ -159,25 +159,17 @@ func readVideoAndAudio(media *reisen.Media) (<-chan *image.RGBA, <-chan [2]float
 // for reference.
 func streamSamples(sampleSource <-chan [2]float64) beep.Streamer {
 	return beep.StreamerFunc(func(samples [][2]float64) (n int, ok bool) {
-		numRead := 0
-
 		for i := 0; i < len(samples); i++ {
 			sample, ok := <-sampleSource
 
 			if !ok {
-				numRead = i + 1
-				break
+				return i, false
 			}
 
 			samples[i] = sample
-			numRead++
 		}
 
-		if numRead < len(samples) {
-			return numRead, false
-		}
-
-		return numRead, true
+		return len(samples), true
 	})
 }
 
