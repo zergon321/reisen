@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"image"
+	"os"
 	"time"
 
 	"github.com/faiface/beep"
@@ -330,7 +331,8 @@ func (game *Game) Layout(a, b int) (int, int) {
 
 func main() {
 	game := &Game{}
-	err := game.Start("demo.mp4")
+	// Play the video provided in the commandline, or default to demo.mp4
+	err := game.Start(append(os.Args[1:], "demo.mp4")[0])
 	handleError(err)
 
 	ebiten.SetWindowSize(startWidth, startHeight)
