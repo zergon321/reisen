@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	width                             = 1280
-	height                            = 720
+	startWidth                        = 1280
+	startHeight                       = 720
 	frameBufferLength                 = 10
 	sampleRate                        = 44100
 	sampleBufferLength                = 4096
@@ -187,6 +187,8 @@ type Game struct {
 	ticker                 <-chan time.Time
 	errs                   <-chan error
 	frameBuffer            <-chan *image.RGBA
+	width                  int
+	height                 int
 	fps                    int
 	videoTotalFramesPlayed int
 	videoPlaybackFPS       int
@@ -201,14 +203,6 @@ func (game *Game) Start(fname string) error {
 	// Initialize the audio speaker.
 	err := speaker.Init(sampleRate,
 		SpeakerSampleRate.N(time.Second/10))
-
-	if err != nil {
-		return err
-	}
-
-	// Sprite for drawing video frames.
-	game.videoSprite, err = ebiten.NewImage(
-		width, height, ebiten.FilterDefault)
 
 	if err != nil {
 		return err
@@ -283,6 +277,19 @@ func (game *Game) Update(screen *ebiten.Image) error {
 		frame, ok := <-game.frameBuffer
 
 		if ok {
+			rect := frame.Bounds()
+			width := int(rect.Max.X - rect.Min.X)
+			height := int(rect.Max.Y - rect.Min.Y)
+
+			if game.width != width || game.height != height {
+				// Sprite for drawing video frames.
+				sprite, err := ebiten.NewImage(width, height, ebiten.FilterDefault)
+				if err != nil {
+					return err
+				}
+				ebiten.SetWindowSize(width, height)
+				game.videoSprite, game.width, game.height = sprite, width, height
+			}
 			game.videoSprite.ReplacePixels(frame.Pix)
 
 			game.videoTotalFramesPlayed++
@@ -318,7 +325,7 @@ func (game *Game) Update(screen *ebiten.Image) error {
 }
 
 func (game *Game) Layout(a, b int) (int, int) {
-	return width, height
+	return a, b
 }
 
 func main() {
@@ -326,7 +333,7 @@ func main() {
 	err := game.Start("demo.mp4")
 	handleError(err)
 
-	ebiten.SetWindowSize(width, height)
+	ebiten.SetWindowSize(startWidth, startHeight)
 	ebiten.SetWindowTitle("Video")
 	err = ebiten.RunGame(game)
 	handleError(err)
