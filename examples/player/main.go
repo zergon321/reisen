@@ -128,10 +128,9 @@ func readVideoAndAudio(media *reisen.Media) (<-chan *image.RGBA, <-chan [2]float
 
 				// See the README.md file for
 				// detailed scheme of the sample structure.
-				for reader.Len() > 0 {
+				for reader.Len() >= 16 {
 					sample := [2]float64{0, 0}
-					var result float64
-					err = binary.Read(reader, binary.LittleEndian, &result)
+					err = binary.Read(reader, binary.LittleEndian, sample[:])
 
 					if err != nil {
 						go func(err error) {
@@ -139,17 +138,6 @@ func readVideoAndAudio(media *reisen.Media) (<-chan *image.RGBA, <-chan [2]float
 						}(err)
 					}
 
-					sample[0] = result
-
-					err = binary.Read(reader, binary.LittleEndian, &result)
-
-					if err != nil {
-						go func(err error) {
-							errs <- err
-						}(err)
-					}
-
-					sample[1] = result
 					sampleBuffer <- sample
 				}
 			}
