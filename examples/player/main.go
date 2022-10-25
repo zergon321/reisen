@@ -17,11 +17,9 @@ import (
 const (
 	width                             = 1280
 	height                            = 720
-	frameBufferSize                   = 1024
+	frameBufferLength                 = 10
 	sampleRate                        = 44100
-	channelCount                      = 2
-	bitDepth                          = 8
-	sampleBufferSize                  = 32 * channelCount * bitDepth * 1024
+	sampleBufferLength                = 4096
 	SpeakerSampleRate beep.SampleRate = 44100
 )
 
@@ -29,9 +27,8 @@ const (
 // from the opened media and sends the decoded
 // data to che channels to be played.
 func readVideoAndAudio(media *reisen.Media) (<-chan *image.RGBA, <-chan [2]float64, chan error, error) {
-	frameBuffer := make(chan *image.RGBA,
-		frameBufferSize)
-	sampleBuffer := make(chan [2]float64, sampleBufferSize)
+	frameBuffer := make(chan *image.RGBA, frameBufferLength)
+	sampleBuffer := make(chan [2]float64, sampleBufferLength)
 	errs := make(chan error)
 
 	err := media.OpenDecode()
