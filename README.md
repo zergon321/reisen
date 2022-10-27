@@ -27,7 +27,13 @@ sudo apt install libswscale-dev libavcodec-dev libavformat-dev libswresample-dev
 For **macOS**:
 
 ```bash
-brew install libav
+brew install ffmpeg
+```
+
+Then run any program using the library with
+
+```bash
+CGO_CPPFLAGS="-I/opt/homebrew/Cellar/ffmpeg/5.1.2/include" go run .
 ```
 
 For **Windows** see the [detailed tutorial](https://medium.com/@maximgradan/how-to-easily-bundle-your-cgo-application-for-windows-8515d2b19f1e).
