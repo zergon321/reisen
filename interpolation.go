@@ -1,6 +1,6 @@
 package reisen
 
-// #cgo LDFLAGS: -lswscale
+// #cgo pkg-config: libswscale
 // #include <libswscale/swscale.h>
 import "C"
 

@@ -1,6 +1,6 @@
 package reisen
 
-// #cgo LDFLAGS: -lavutil -lavformat -lavcodec -lswresample
+// #cgo pkg-config: libavformat libavcodec libavutil libswresample
 // #include <libavcodec/avcodec.h>
 // #include <libavformat/avformat.h>
 // #include <libavutil/avutil.h>
@@ -22,8 +22,8 @@ const (
 // audio frames consisting of audio samples.
 type AudioStream struct {
 	baseStream
-	swrCtx *C.SwrContext
-	buffer *C.uint8_t
+	swrCtx     *C.SwrContext
+	buffer     *C.uint8_t
 	bufferSize C.int
 }
 
