@@ -1,6 +1,6 @@
 package reisen
 
-// #cgo LDFLAGS: -lavformat -lavcodec -lavutil -lswscale
+// #cgo pkg-config: libavformat libavcodec libavutil libswscale
 // #include <libavcodec/avcodec.h>
 // #include <libavformat/avformat.h>
 // #include <libavutil/avconfig.h>
