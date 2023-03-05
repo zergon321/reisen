@@ -1,0 +1,1 @@
+ffmpeg -re -i video.mp4 -c:v copy -c:a aac -ar 44100 -ac 1 -f flv rtmp://127.0.0.1/live/stream

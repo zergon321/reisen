@@ -1,0 +1,9 @@
+version: "3.7"
+
+services:
+  rtmp-streamer:
+    image: tiangolo/nginx-rtmp
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - 1935:1935

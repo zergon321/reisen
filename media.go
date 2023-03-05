@@ -105,14 +105,15 @@ func (media *Media) FormatMIMEType() string {
 // from the media container.
 func (media *Media) findStreams() error {
 	streams := []Stream{}
-	innerStreams := unsafe.Slice(
-		media.ctx.streams, media.ctx.nb_streams)
 	status := C.avformat_find_stream_info(media.ctx, nil)
 
 	if status < 0 {
 		return fmt.Errorf(
 			"couldn't find stream information")
 	}
+
+	innerStreams := unsafe.Slice(
+		media.ctx.streams, media.ctx.nb_streams)
 
 	for _, innerStream := range innerStreams {
 		codecParams := innerStream.codecpar
