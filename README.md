@@ -21,6 +21,7 @@ sudo pacman -S ffmpeg
 For **Debian**-based **Linux** distributions:
 
 ```bash
+sudo add-apt-repository ppa:savoury1/ffmpeg4
 sudo apt install libswscale-dev libavcodec-dev libavformat-dev libswresample-dev libavutil-dev
 ```
 
