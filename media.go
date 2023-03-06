@@ -7,6 +7,7 @@ package reisen
 // #include <libswscale/swscale.h>
 // #include <libavcodec/bsf.h>
 import "C"
+
 import (
 	"fmt"
 	"time"
@@ -120,9 +121,14 @@ func (media *Media) findStreams() error {
 		codec := C.avcodec_find_decoder(codecParams.codec_id)
 
 		if codec == nil {
-			return fmt.Errorf(
-				"couldn't find codec by ID = %d",
-				codecParams.codec_id)
+			unknownStream := new(UnknownStream)
+			unknownStream.inner = innerStream
+			unknownStream.codecParams = codecParams
+			unknownStream.media = media
+
+			streams = append(streams, unknownStream)
+
+			continue
 		}
 
 		switch codecParams.codec_type {
@@ -145,7 +151,13 @@ func (media *Media) findStreams() error {
 			streams = append(streams, audioStream)
 
 		default:
-			return fmt.Errorf("unknown stream type")
+			unknownStream := new(UnknownStream)
+			unknownStream.inner = innerStream
+			unknownStream.codecParams = codecParams
+			unknownStream.codec = codec
+			unknownStream.media = media
+
+			streams = append(streams, unknownStream)
 		}
 	}
 
@@ -256,7 +268,6 @@ func NewMedia(filename string) (*Media, error) {
 
 	C.free(unsafe.Pointer(fname))
 	err := media.findStreams()
-
 	if err != nil {
 		return nil, err
 	}
