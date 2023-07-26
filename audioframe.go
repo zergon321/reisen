@@ -1,5 +1,14 @@
 package reisen
 
+// #cgo pkg-config: libavutil libavformat libavcodec  libswscale
+// #include <libavcodec/avcodec.h>
+// #include <libavformat/avformat.h>
+// #include <libavutil/avutil.h>
+// #include <libavutil/imgutils.h>
+// #include <libswscale/swscale.h>
+// #include <inttypes.h>
+import "C"
+
 // AudioFrame is a data frame
 // obtained from an audio stream.
 type AudioFrame struct {
