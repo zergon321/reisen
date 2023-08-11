@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"image"
+	"os"
 	"time"
 
 	"github.com/faiface/beep"
@@ -15,13 +16,11 @@ import (
 )
 
 const (
-	width                             = 1280
-	height                            = 720
-	frameBufferSize                   = 1024
+	startWidth                        = 1280
+	startHeight                       = 720
+	frameBufferLength                 = 10
 	sampleRate                        = 44100
-	channelCount                      = 2
-	bitDepth                          = 8
-	sampleBufferSize                  = 32 * channelCount * bitDepth * 1024
+	sampleBufferLength                = 4096
 	SpeakerSampleRate beep.SampleRate = 44100
 )
 
@@ -29,9 +28,8 @@ const (
 // from the opened media and sends the decoded
 // data to che channels to be played.
 func readVideoAndAudio(media *reisen.Media) (<-chan *image.RGBA, <-chan [2]float64, chan error, error) {
-	frameBuffer := make(chan *image.RGBA,
-		frameBufferSize)
-	sampleBuffer := make(chan [2]float64, sampleBufferSize)
+	frameBuffer := make(chan *image.RGBA, frameBufferLength)
+	sampleBuffer := make(chan [2]float64, sampleBufferLength)
 	errs := make(chan error)
 
 	err := media.OpenDecode()
@@ -128,10 +126,9 @@ func readVideoAndAudio(media *reisen.Media) (<-chan *image.RGBA, <-chan [2]float
 
 				// See the README.md file for
 				// detailed scheme of the sample structure.
-				for reader.Len() > 0 {
+				for reader.Len() >= 16 {
 					sample := [2]float64{0, 0}
-					var result float64
-					err = binary.Read(reader, binary.LittleEndian, &result)
+					err = binary.Read(reader, binary.LittleEndian, sample[:])
 
 					if err != nil {
 						go func(err error) {
@@ -139,17 +136,6 @@ func readVideoAndAudio(media *reisen.Media) (<-chan *image.RGBA, <-chan [2]float
 						}(err)
 					}
 
-					sample[0] = result
-
-					err = binary.Read(reader, binary.LittleEndian, &result)
-
-					if err != nil {
-						go func(err error) {
-							errs <- err
-						}(err)
-					}
-
-					sample[1] = result
 					sampleBuffer <- sample
 				}
 			}
@@ -173,25 +159,17 @@ func readVideoAndAudio(media *reisen.Media) (<-chan *image.RGBA, <-chan [2]float
 // for reference.
 func streamSamples(sampleSource <-chan [2]float64) beep.Streamer {
 	return beep.StreamerFunc(func(samples [][2]float64) (n int, ok bool) {
-		numRead := 0
-
 		for i := 0; i < len(samples); i++ {
 			sample, ok := <-sampleSource
 
 			if !ok {
-				numRead = i + 1
-				break
+				return i, false
 			}
 
 			samples[i] = sample
-			numRead++
 		}
 
-		if numRead < len(samples) {
-			return numRead, false
-		}
-
-		return numRead, true
+		return len(samples), true
 	})
 }
 
@@ -202,6 +180,8 @@ type Game struct {
 	ticker                 <-chan time.Time
 	errs                   <-chan error
 	frameBuffer            <-chan *image.RGBA
+	width                  int
+	height                 int
 	fps                    int
 	videoTotalFramesPlayed int
 	videoPlaybackFPS       int
@@ -216,14 +196,6 @@ func (game *Game) Start(fname string) error {
 	// Initialize the audio speaker.
 	err := speaker.Init(sampleRate,
 		SpeakerSampleRate.N(time.Second/10))
-
-	if err != nil {
-		return err
-	}
-
-	// Sprite for drawing video frames.
-	game.videoSprite, err = ebiten.NewImage(
-		width, height, ebiten.FilterDefault)
 
 	if err != nil {
 		return err
@@ -298,6 +270,19 @@ func (game *Game) Update(screen *ebiten.Image) error {
 		frame, ok := <-game.frameBuffer
 
 		if ok {
+			rect := frame.Bounds()
+			width := int(rect.Max.X - rect.Min.X)
+			height := int(rect.Max.Y - rect.Min.Y)
+
+			if game.width != width || game.height != height {
+				// Sprite for drawing video frames.
+				sprite, err := ebiten.NewImage(width, height, ebiten.FilterDefault)
+				if err != nil {
+					return err
+				}
+				ebiten.SetWindowSize(width, height)
+				game.videoSprite, game.width, game.height = sprite, width, height
+			}
 			game.videoSprite.ReplacePixels(frame.Pix)
 
 			game.videoTotalFramesPlayed++
@@ -333,15 +318,16 @@ func (game *Game) Update(screen *ebiten.Image) error {
 }
 
 func (game *Game) Layout(a, b int) (int, int) {
-	return width, height
+	return a, b
 }
 
 func main() {
 	game := &Game{}
-	err := game.Start("demo.mp4")
+	// Play the video provided in the commandline, or default to demo.mp4
+	err := game.Start(append(os.Args[1:], "demo.mp4")[0])
 	handleError(err)
 
-	ebiten.SetWindowSize(width, height)
+	ebiten.SetWindowSize(startWidth, startHeight)
 	ebiten.SetWindowTitle("Video")
 	err = ebiten.RunGame(game)
 	handleError(err)
