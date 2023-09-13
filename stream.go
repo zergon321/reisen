@@ -406,10 +406,9 @@ func (stream *baseStream) read() (bool, error) {
 			return true, nil
 		}
 
-		stream.skip = false
+		stream.skip = true
 
-		return false, fmt.Errorf(
-			"%d: couldn't receive the frame from the codec context", status)
+		return true, nil
 	}
 
 	C.av_packet_unref(stream.media.packet)
